@@ -1,3 +1,15 @@
+###############################################
+#                                             # 
+#                                             #
+#  Bootstrapy is a tool for colored terminal  #
+#                                             #
+#  author: Joaquim Roque                      #
+#  twitter: catumua_                          #
+#  github: joaroque                           #
+#  email: haguacomh@gmail.com                 #
+#                                             #
+#                                             # 
+###############################################
 import ctypes
 import platform
 import random
