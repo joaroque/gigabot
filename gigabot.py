@@ -3,9 +3,7 @@ try:
 	import sqlite3
 	import json
 	import re
-	from time import sleep
-	import logging
-	from selenium import webdriver
+	import time
 	from bs4 import BeautifulSoup
 	from modules.headers import Headers
 	from modules.banner import banner, menu
@@ -28,10 +26,14 @@ class Gigabot():
 			data = start.read()
 			obj = json.loads(data)
 			start = requests.post("http://giga.unitel.ao/api/game/start",data=obj, headers=headers)
+			print(start)
+			print(start.text)
 	
 	def get_database(self):
 		conn = sqlite3.connect('perguntas.db')
 		return conn
+
+
 
 	def get_question(self):	
 		headers = Headers.headers_question
@@ -45,6 +47,27 @@ class Gigabot():
 		print("=== QUESTÃO ===\n")
 		print(question[start+8:end-3].upper())
 		self.find_question = question[start+8:end-3]
+		#:{"moveId":4628870481,"stageIndex":1
+		movstart = question.find('moveId')
+		movend = question.find('stageIndex')
+		self.moveId = question[movstart+8:movend-2]
+
+	def answered(self,answer):
+		headers = Headers.answer
+		payload = {
+			"moveId":int(self.moveId),
+			"index":int(answer),
+			"help":None,
+			"time": 20,
+			"optional":None
+		}
+		with open('answer.json', 'r') as answer:
+			data = answer.read()
+			obj = json.loads(data)
+		#print(payload)
+		answer = requests.post("http://giga.unitel.ao/api/game/answer",data=obj, headers=headers)
+		print(answer)
+
 
 	def get_answers(self):
 		headers = Headers.headers_question
@@ -65,19 +88,21 @@ class Gigabot():
 		self.answers_list= [self.a,self.b,self.c,self.d]
 		
 	def get_all_questions_in_db(self):
-		conn = self.get_database()
+		conn = sqlite3.connect('quizdeomilhao.db')
 		cursor = conn.cursor()
-		cursor = conn.execute('SELECT * FROM Quizdeomilhao').fetchall()
-
-		print(Strapy.RUN+"A pesquisar perguntas no banco de dados..."+Strapy.END)
-
-		print(Strapy.GOOD+"Pergunta(s) encontrada(s) no banco de dados!"+Strapy.END)
+		cursor = conn.execute('SELECT * FROM quizdeomilhao')
 		for row in cursor:
-			print(f"Id: {row[0]} \nPergunta: {row[1]} \nResposta: {row[2]}")
+			print(f"{row[0]} - {row[1]} \n {row[2]}")
 
-		if not str in cursor:
-			print(Strapy.BAD+"Pergunta(s) não encontrada(s) no banco de dados!"+Strapy.END)
-			return False
+		#print(Strapy.RUN+"A pesquisar perguntas no banco de dados..."+Strapy.END)
+
+		#print(Strapy.GOOD+"Pergunta(s) encontrada(s) no banco de dados!"+Strapy.END)
+		#for row in cursor:
+		#	print(f"Id: {row[0]} \nPergunta: {row[1]} \nResposta: {row[2]}")
+
+		#if not str in cursor:
+		#	print(Strapy.BAD+"Pergunta(s) não encontrada(s) no banco de dados!"+Strapy.END)
+		#	return False
 
 		conn.close()
 
@@ -102,22 +127,24 @@ class Gigabot():
 			self.verify_db = True
 
 	def get_question_in_db2(self):
-		#cursor = self.get_question_in_db()
+		question = self.find_question.split("\\")
 		conn = sqlite3.connect('quizdeomilhao.db')
 		cursor = conn.cursor()
-		question = self.find_question.split("\\")
-		cursor = conn.execute('SELECT * FROM Quizdeomilhao WHERE question LIKE "{}"'.format(question))
-
-		print(Strapy.RUN+"A pesquisar resposta no banco de dados 2 ..."+Strapy.END)
-
+		cursor = conn.execute('SELECT * FROM quizdeomilhao WHERE question = "{}"'.format(question))
+		print("«««BUSCANDO NO QUIZDOMILHÃO»»»")
 		for row in cursor:
-			print(Strapy.GOOD+"Resposta encontrada no banco de dados!"+Strapy.END)
-			print(f"Id: {row[0]} \nPergunta: {row[1]} \nResposta: {row[2]}\n")
-			self.verify_db2 = True
+			print(f"{row[0]} - {row[1]} \n {row[2]}")
 
-		if not str in cursor:
-			print(Strapy.BAD+"Resposta não encontra no banco de dados!"+Strapy.END)
-			self.verify_db2 = True
+		#print(Strapy.RUN+"A pesquisar resposta no banco de dados 2 ..."+Strapy.END)
+
+		#for row in cursor:
+		#	print(Strapy.GOOD+"Resposta encontrada no banco de dados!"+Strapy.END)
+		#	print(f"Id: {row[0]} \nPergunta: {row[1]} \nResposta: {row[2]}\n")
+		#	self.verify_db2 = True
+
+		#if not str in cursor:
+		#	print(Strapy.BAD+"Resposta não encontra no banco de dados!"+Strapy.END)
+		#	self.verify_db2 = True
 
 
 	def search_in_google(self):
@@ -125,8 +152,7 @@ class Gigabot():
 		search = requests.get("https://www.google.com/search?q="+self.find_question)
 		soup = BeautifulSoup(search.text, 'html.parser')
 		
-		print(self.answers_list)
-		
+		#print(self.answers_list)
 		for answer in self.answers_list:
 			#a = soup.find(answer)
 			#print("BeautifulSoup")
@@ -134,6 +160,7 @@ class Gigabot():
 			#print(a)
 			#print("Regex")
 			result = re.search(r''+answer, soup.prettify()) 
+			print("«««BUSCANDO NO GOOGLE»»»")
 			print(result)
 			#if result.group() in self.answers_list:
 			#	print("Respostas achada pelo google:")
@@ -169,24 +196,32 @@ class Gigabot():
 def main():
 	banner()
 	url = "http://giga.unitel.ao/api/game/question"
-	bg = Gigabot(url)
+	gb = Gigabot(url)
 	#bg.start_game()
-	#bg.get_question()
-	#bg.get_answers()
-	#bg.get_database()	
-	#bg.get_question_in_db()
-	#bg.save_question_in_db()
-	#bg.get_all_questions_in_db()
+	#bg.start_game()
+	#gb.get_question()
+	#gb.get_answers()
+	#gb.get_question_in_db()
+	#gb.get_question_in_db2()
+	#resposta = input("\nInsere a resposta:")
+	#bg.answered(resposta)
 	#bg.search_in_google()
+	#bg.save_question_in_db()
+	gb.get_question()
+	gb.get_answers()
+	gb.get_question_in_db()
+	gb.get_question_in_db2()
+	gb.search_in_google()
 	
-	menu()
-	
+	#menu()
+	#bg.get_all_questions_in_db()
+	"""
 	try:
 		opt = int(input(">>>"))
 	except ValueError:
 		print("Somente números!")
 	if opt == 1:
-		bg()
+		bg.start_game()
 	elif opt == 2:
 		bg.get_all_questions_in_db()
 	
@@ -200,8 +235,9 @@ def main():
 		bg.get_question_in_db()
 		bg.get_question_in_db2()
 		bg.search_in_google()
-		bg.save_question_in_db()
+		#bg.save_question_in_db()
 	else:
 		exit("Saindo!")
+	"""
 if __name__ == '__main__':
 	main()
