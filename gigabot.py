@@ -112,7 +112,7 @@ class Gigabot():
 		conn = self.get_database()
 		cursor = conn.cursor()
 		question = self.find_question.split("\\")
-		cursor = conn.execute('SELECT * FROM Quiz WHERE question LIKE "{}"'.format(question))
+		cursor = conn.execute('SELECT * FROM Quiz WHERE question ==« "{}"'.format(question))
 
 		print(Strapy.RUN+"A pesquisar resposta no banco de dados..."+Strapy.END)
 
@@ -124,7 +124,7 @@ class Gigabot():
 
 		if not str in cursor:
 			print(Strapy.BAD+"Resposta não encontra no banco de dados!"+Strapy.END)
-			self.verify_db = True
+			self.verify_db = False
 
 	def get_question_in_db2(self):
 		question = self.find_question.split("\\")
@@ -153,6 +153,7 @@ class Gigabot():
 		soup = BeautifulSoup(search.text, 'html.parser')
 		
 		#print(self.answers_list)
+		#924482776
 		for answer in self.answers_list:
 			#a = soup.find(answer)
 			#print("BeautifulSoup")
@@ -166,7 +167,7 @@ class Gigabot():
 			#	print("Respostas achada pelo google:")
 			#	print(result.group())
 			#	self.verify_google = True
-		self.verify_google = True
+		#self.verify_google = True
 
 	def save_question_in_db(self):
 
@@ -182,15 +183,14 @@ class Gigabot():
 				print(Strapy.BAD+"Insere uma resposta, verfica a resposta do portal :("+Strapy.END)
 				my_answer
 				if my_answer:
-					pass
-			print(Strapy.RUN+"Salvando a resposta..."+Strapy.END)
-			conn = self.get_database()
-			cursor = conn.cursor()
-			cursor.execute('INSERT INTO Quiz(question,answer) VALUES(?,?)',
-							(self.find_question, my_answer))
-			conn.commit()
-			conn.close()
-			print(Strapy.GOOD+"Resposta salva no banco!"+Strapy.END)
+					print(Strapy.RUN+"Salvando a resposta..."+Strapy.END)
+					conn = self.get_database()
+					cursor = conn.cursor()
+					cursor.execute('INSERT INTO Quiz(question,answer) VALUES(?,?)',
+									(self.find_question, my_answer))
+					conn.commit()
+					conn.close()
+					print(Strapy.GOOD+"Resposta salva no banco!"+Strapy.END)
 
 
 def main():
@@ -209,8 +209,8 @@ def main():
 	#bg.save_question_in_db()
 	gb.get_question()
 	gb.get_answers()
-	gb.get_question_in_db()
-	gb.get_question_in_db2()
+	#gb.get_question_in_db()
+	#gb.get_question_in_db2()
 	gb.search_in_google()
 	
 	#menu()
